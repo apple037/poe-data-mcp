@@ -91,7 +91,9 @@ def search_gem(query: str) -> str:
 
 
 def get_gem_detail(gem_name: str) -> str:
-    """Get detailed information about a specific Path of Exile gem (via poedb).
+    """KNOWN BROKEN (2026-11-12): returns only the per-level scaling table for gems whose poedb popup is a summoned-monster/Default Attack tooltip (e.g. Cyclone); gem description, tags and stat text are omitted. Use fetch_wiki_page on the gem's poewiki page for the description.
+
+    Get detailed information about a specific Path of Exile gem (via poedb).
 
     NOTE: Prefer pob-mcp's `get_gem_detail`, which sources gem data from Path of
     Building's own game data (patch-current, matches the in-game tooltip, handles
