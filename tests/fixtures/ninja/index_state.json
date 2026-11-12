@@ -1,0 +1,169 @@
+{
+"buildLeagues": [
+{
+"name": "Standard",
+"url": "standard",
+"displayName": "Standard"
+},
+{
+"name": "Solo Self-Found",
+"url": "ssf",
+"displayName": "Solo Self-Found"
+},
+{
+"name": "prepppppppppppp (PL87333)",
+"url": "pl87333",
+"displayName": "prepppppppppppp"
+},
+{
+"name": "Halloween Strike GSF end league (PL87319)",
+"url": "pl87319",
+"displayName": "Halloween Strike GSF end league"
+},
+{
+"name": "duo grind xxs (PL87311)",
+"url": "pl87311",
+"displayName": "duo grind xxs"
+},
+{
+"name": "\u73a9\u7ea2\u8272\u7537\u4eba\u7684\u662f\u59b9\u738b (PL87101)",
+"url": "pl87101",
+"displayName": "\u73a9\u7ea2\u8272\u7537\u4eba\u7684\u662f\u59b9\u738b"
+},
+{
+"name": "La PL des trois passions (PL87158)",
+"url": "pl87158",
+"displayName": "La PL des trois passions"
+},
+{
+"name": "SSF Test League Three Dot Thirty (PL87352)",
+"url": "pl87352",
+"displayName": "SSF Test League Three Dot Thirty"
+}
+],
+"snapshotVersions": [
+{
+"url": "standard",
+"type": "exp",
+"name": "Standard",
+"timeMachineLabels": [],
+"version": "0352-20261112-06293",
+"snapshotName": "standard",
+"overviewType": 0,
+"passiveTree": "PassiveTree-3.29",
+"atlasTree": "AtlasTree-3.29"
+},
+{
+"url": "pl87333",
+"type": "exp",
+"name": "prepppppppppppp (PL87333)",
+"timeMachineLabels": [
+"week-1",
+"day-6",
+"day-4",
+"day-2",
+"day-5",
+"day-3",
+"day-1"
+],
+"version": "0359-20261112-57185",
+"snapshotName": "prepppppppppppp-(pl87333)",
+"overviewType": 0,
+"passiveTree": "PassiveTree-3.29",
+"atlasTree": "AtlasTree-3.29"
+},
+{
+"url": "pl87333",
+"type": "depthsolo",
+"name": "prepppppppppppp (PL87333)",
+"timeMachineLabels": [
+"week-1",
+"day-6",
+"day-4",
+"day-2",
+"day-5",
+"day-3",
+"day-1"
+],
+"version": "0400-20261112-44614",
+"snapshotName": "prepppppppppppp-(pl87333)",
+"overviewType": 0,
+"passiveTree": "PassiveTree-3.29",
+"atlasTree": "AtlasTree-3.29"
+},
+{
+"url": "allflame",
+"type": "exp",
+"name": "Allflame",
+"timeMachineLabels": [
+"week-14",
+"hour-6",
+"hour-18",
+"week-3",
+"week-2",
+"week-6",
+"week-4",
+"week-7",
+"week-1",
+"week-13",
+"day-6",
+"hour-3",
+"week-15",
+"week-5",
+"day-4",
+"week-10",
+"hour-12",
+"day-2",
+"day-5",
+"day-3",
+"day-1",
+"week-8",
+"week-12",
+"week-11",
+"week-9"
+],
+"version": "0208-20261111-47167",
+"snapshotName": "allflame",
+"overviewType": 0,
+"passiveTree": "PassiveTree-3.29",
+"atlasTree": "AtlasTree-3.29"
+},
+{
+"url": "allflame",
+"type": "depthsolo",
+"name": "Allflame",
+"timeMachineLabels": [
+"week-14",
+"hour-6",
+"hour-18",
+"week-3",
+"week-2",
+"week-6",
+"week-4",
+"week-7",
+"week-1",
+"week-13",
+"day-6",
+"hour-3",
+"week-15",
+"week-5",
+"day-4",
+"week-10",
+"hour-12",
+"day-2",
+"day-5",
+"day-3",
+"day-1",
+"week-8",
+"week-12",
+"week-11",
+"week-9"
+],
+"version": "0219-20261111-37808",
+"snapshotName": "allflame",
+"overviewType": 0,
+"passiveTree": "PassiveTree-3.29",
+"atlasTree": "AtlasTree-3.29"
+}
+]
+}

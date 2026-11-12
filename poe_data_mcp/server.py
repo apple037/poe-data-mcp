@@ -18,6 +18,7 @@ from poe_data_mcp.sources.crafting.craftofexile import (
 )
 from poe_data_mcp.sources.env import env_detail, env_search
 from poe_data_mcp.sources.economy import currency_overview, price_check
+from poe_data_mcp.sources.economy.ninja_builds import get_build_stats
 from poe_data_mcp.sources.wiki import fetch_wiki_page, wiki_cargo_query
 from poe_data_mcp.sources.player.pob import parse_pob, parse_pob_skill_groups
 from poe_data_mcp.sources.youtube import fetch_youtube_description, fetch_youtube_transcript
@@ -34,6 +35,7 @@ Rules:
 - Tool arguments must be English game terms (e.g. 'two hand axe', 'maximum life'). Translate first.
 - For mod tiers, spawn weights or roll chances, always call get_craft_tiers / search_craft_mods; never answer from memory. get_craft_tiers takes an item class, not a base item name.
 - For mechanics (ailments, damage calculation), call fetch_wiki_page with a guessed URL like https://www.poewiki.net/wiki/Ignite; if it 404s, try wiki_cargo_query or a related page name.
+- For what gear, supports or ascendancies players use (build popularity), call get_build_stats; relay any NOTICE line to the user.
 - Include the source URL from tool output in your answer.
 """
 
@@ -102,6 +104,7 @@ mcp.tool()(env_detail)
 # --- Economy domain ---
 mcp.tool()(price_check)
 mcp.tool()(currency_overview)
+mcp.tool()(get_build_stats)
 
 # --- Universal ---
 mcp.tool()(fetch_wiki_page)
