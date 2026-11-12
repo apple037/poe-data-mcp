@@ -31,8 +31,8 @@ passive nodes, item mods, Craft of Exile mod tiers and spawn weights, maps, scar
 live prices, and Path of Building export parsing.
 
 Rules:
-- Tool arguments must be English game terms (e.g. 'Vaal Axe', 'maximum life'). Translate first.
-- For mod tiers, spawn weights or roll chances, always call get_craft_tiers / search_craft_mods; never answer from memory.
+- Tool arguments must be English game terms (e.g. 'two hand axe', 'maximum life'). Translate first.
+- For mod tiers, spawn weights or roll chances, always call get_craft_tiers / search_craft_mods; never answer from memory. get_craft_tiers takes an item class, not a base item name.
 - For mechanics (ailments, damage calculation), call fetch_wiki_page with a guessed URL like https://www.poewiki.net/wiki/Ignite; if it 404s, try wiki_cargo_query or a related page name.
 - Include the source URL from tool output in your answer.
 """
@@ -128,10 +128,13 @@ def main():
         mcp.settings.host = host
         mcp.settings.port = int(os.environ.get("MCP_PORT", "47820"))
         if host not in ("127.0.0.1", "localhost", "::1"):
-            # FastMCP built at import time with host 127.0.0.1 enables DNS-rebinding
-            # protection that rejects LAN Host headers; relax it for LAN binds.
+            # Keep DNS-rebinding protection on, but allow the LAN Host header(s).
+            default_hosts = "192.168.0.216:*,127.0.0.1:*,localhost:*"
+            hosts = [h.strip() for h in os.environ.get("MCP_ALLOWED_HOSTS", default_hosts).split(",") if h.strip()]
             mcp.settings.transport_security = TransportSecuritySettings(
-                enable_dns_rebinding_protection=False
+                enable_dns_rebinding_protection=True,
+                allowed_hosts=hosts,
+                allowed_origins=[],
             )
     mcp.run(transport=transport)
 

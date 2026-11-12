@@ -22,10 +22,28 @@ def test_http_from_env(monkeypatch):
     assert server.mcp.settings.port == 47820
 
 
-def test_lan_host_not_rejected_when_bound_to_all_interfaces(monkeypatch):
+def _lan_main(monkeypatch, allowed=None):
     monkeypatch.setenv("MCP_TRANSPORT", "streamable-http")
     monkeypatch.setenv("MCP_HOST", "0.0.0.0")
+    if allowed is None:
+        monkeypatch.delenv("MCP_ALLOWED_HOSTS", raising=False)
+    else:
+        monkeypatch.setenv("MCP_ALLOWED_HOSTS", allowed)
     monkeypatch.setattr(server.mcp, "run", lambda **kw: None)
+    for attr in ("host", "port", "transport_security"):
+        monkeypatch.setattr(server.mcp.settings, attr, getattr(server.mcp.settings, attr))
     server.main()
-    ts = server.mcp.settings.transport_security
-    assert ts is None or not ts.enable_dns_rebinding_protection
+    return server.mcp.settings.transport_security
+
+
+def test_lan_bind_keeps_protection_with_default_hosts(monkeypatch):
+    ts = _lan_main(monkeypatch)
+    assert ts.enable_dns_rebinding_protection is True
+    assert ts.allowed_hosts == ["192.168.0.216:*", "127.0.0.1:*", "localhost:*"]
+    assert ts.allowed_origins == []
+
+
+def test_allowed_hosts_from_env(monkeypatch):
+    ts = _lan_main(monkeypatch, " a.lan:*, b.lan ")
+    assert ts.enable_dns_rebinding_protection is True
+    assert ts.allowed_hosts == ["a.lan:*", "b.lan"]
