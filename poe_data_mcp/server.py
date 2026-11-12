@@ -3,6 +3,8 @@ import os
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
+from poe_data_mcp.guard import guard
+
 from poe_data_mcp.sources.player.gems import get_gem_detail, search_gem
 from poe_data_mcp.sources.player.items import get_item_detail, search_item
 from poe_data_mcp.sources.player.passives import get_passive_detail, search_passive
@@ -42,6 +44,10 @@ Rules:
 mcp = FastMCP("poe-data-mcp", instructions=_INSTRUCTIONS)
 
 
+def tool(fn):
+    return mcp.tool()(guard(fn))
+
+
 def poe_mcp_suite_info() -> str:
     """Install instructions and overview for the full poe_mcp_suite.
 
@@ -78,51 +84,51 @@ ephemeral (uvx/npx) server - the suite is a git clone, not a single package.
 
 
 # --- Player domain ---
-mcp.tool()(search_gem)
-mcp.tool()(get_gem_detail)
-mcp.tool()(search_item)
-mcp.tool()(get_item_detail)
-mcp.tool()(search_passive)
-mcp.tool()(get_passive_detail)
+tool(search_gem)
+tool(get_gem_detail)
+tool(search_item)
+tool(get_item_detail)
+tool(search_passive)
+tool(get_passive_detail)
 
 # --- Mods domain ---
-mcp.tool()(search_mods)
+tool(search_mods)
 
 # --- Craft of Exile ---
-mcp.tool()(craftofexile_cache_status)
-mcp.tool()(update_craftofexile_cache)
-mcp.tool()(search_craft_mods)
-mcp.tool()(get_craft_base_items)
-mcp.tool()(get_craft_tiers)
-mcp.tool()(get_fossil_info)
-mcp.tool()(get_essence_mods)
+tool(craftofexile_cache_status)
+tool(update_craftofexile_cache)
+tool(search_craft_mods)
+tool(get_craft_base_items)
+tool(get_craft_tiers)
+tool(get_fossil_info)
+tool(get_essence_mods)
 
 # --- Env domain ---
-mcp.tool()(env_search)
-mcp.tool()(env_detail)
+tool(env_search)
+tool(env_detail)
 
 # --- Economy domain ---
-mcp.tool()(price_check)
-mcp.tool()(currency_overview)
-mcp.tool()(get_build_stats)
+tool(price_check)
+tool(currency_overview)
+tool(get_build_stats)
 
 # --- Universal ---
-mcp.tool()(fetch_wiki_page)
-mcp.tool()(wiki_cargo_query)
+tool(fetch_wiki_page)
+tool(wiki_cargo_query)
 
 # --- PoB ---
-mcp.tool()(parse_pob)
-mcp.tool()(parse_pob_skill_groups)
+tool(parse_pob)
+tool(parse_pob_skill_groups)
 
 # --- YouTube ---
-mcp.tool()(fetch_youtube_description)
-mcp.tool()(fetch_youtube_transcript)
+tool(fetch_youtube_description)
+tool(fetch_youtube_transcript)
 
 # --- Reddit ---
-mcp.tool()(fetch_reddit_post)
+tool(fetch_reddit_post)
 
 # --- Suite ---
-mcp.tool()(poe_mcp_suite_info)
+tool(poe_mcp_suite_info)
 
 def main():
     transport = os.environ.get("MCP_TRANSPORT", "stdio")
