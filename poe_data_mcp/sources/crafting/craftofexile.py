@@ -421,12 +421,34 @@ def search_craft_mods(query: str, item_class: str = "") -> str:
     return "\n".join(lines)
 
 
-def get_craft_tiers(base_type: str, query: str) -> str:
+def affix_total_weight(
+    tiers_data: dict, mod_detail: dict, base_id: str, affix: str, ilvl: int
+) -> int:
+    """Sum the spawn weights of all rollable tiers of one affix kind on a base.
+
+    Counts tiers with non-zero weight whose min item level is <= ``ilvl``.
+    """
+    total = 0
+    for mod_id, tier_by_base in tiers_data.items():
+        if mod_detail.get(str(mod_id), {}).get("affix") != affix:
+            continue
+        for t in tier_by_base.get(base_id, []):
+            w = int(t.get("weighting", 0) or 0)
+            if w and int(t.get("ilvl", 0) or 0) <= ilvl:
+                total += w
+    return total
+
+
+def get_craft_tiers(base_type: str, query: str, ilvl: int = 100) -> str:
     """Show tier value ranges and spawn weights for a craftable mod on a specific item class.
 
     Looks up mods matching the keyword query and returns every tier's minimum item level,
     value range, and spawn weight — the raw numbers behind crafting probability. Tiers are
     shown highest-first (T1 = best values, lowest weight / hardest to roll).
+
+    The Share column is the chance this tier is picked among all mods of the same affix
+    kind (prefix or suffix) on this item class at item level `ilvl`; it ignores influence,
+    fossil and essence modifiers.
 
     Only tiers with non-zero weight are shown; zero-weight entries are unrollable
     (removed or debug mods) and are silently excluded.
@@ -438,6 +460,8 @@ def get_craft_tiers(base_type: str, query: str) -> str:
                    not individual base item names.
         query: Keyword to search mod text for. Examples: 'increased physical damage',
                'maximum life', 'attack speed', 'critical strike multiplier'.
+        ilvl: Item level used for the Share denominator (only tiers with min iLvl <= this
+              count). Default 100.
     """
     err = _require_cache()
     if err:
@@ -514,12 +538,13 @@ def get_craft_tiers(base_type: str, query: str) -> str:
             f"ID: {mod_id} | {affix} | group: {modgroup} | item class: {base_name} (id {bid})"
         )
         lines.append("")
-        lines.append("| Tier | Min iLvl | Values | Weight |")
-        lines.append("|------|----------|--------|--------|")
+        lines.append("| Tier | Min iLvl | Values | Weight | Share |")
+        lines.append("|------|----------|--------|--------|-------|")
 
+        total = affix_total_weight(tiers_data, mod_detail, bid, affix, ilvl)
         sorted_tiers = sorted(tier_entries, key=lambda t: int(t.get("ilvl", 0)), reverse=True)
         for i, t in enumerate(sorted_tiers):
-            ilvl = t.get("ilvl", "?")
+            tier_ilvl = t.get("ilvl", "?")
             raw_nv = t.get("nvalues", "?")
             weight = t.get("weighting", "?")
             try:
@@ -533,7 +558,12 @@ def get_craft_tiers(base_type: str, query: str) -> str:
                 formatted = ", ".join(parts)
             except Exception:
                 formatted = raw_nv
-            lines.append(f"| T{i + 1} | {ilvl} | {formatted} | {weight} |")
+            try:
+                eligible = int(tier_ilvl) <= ilvl
+                share = f"{int(weight) / total:.2%}" if total and eligible else "—"
+            except (TypeError, ValueError):
+                share = "—"
+            lines.append(f"| T{i + 1} | {tier_ilvl} | {formatted} | {weight} | {share} |")
 
         lines.append("")
 
