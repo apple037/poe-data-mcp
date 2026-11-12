@@ -19,3 +19,9 @@ def test_total_respects_ilvl():
 
 def test_share_zero_total():
     assert affix_total_weight(TIERS, DETAIL, "missing", "prefix", 100) == 0
+
+
+def test_total_excludes_non_base_groups():
+    tiers = {**TIERS, "5": {"B": [{"ilvl": "1", "weighting": "900"}]}}
+    detail = {**DETAIL, "5": {"affix": "prefix", "id_mgroup": "2"}}
+    assert affix_total_weight(tiers, detail, "B", "prefix", 100) == 1750

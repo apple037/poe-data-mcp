@@ -421,21 +421,32 @@ def search_craft_mods(query: str, item_class: str = "") -> str:
     return "\n".join(lines)
 
 
+def _is_base_mod(info: dict) -> bool:
+    """True when a modifier belongs to the base group (id_mgroup 1) or has no group info."""
+    g = info.get("id_mgroup")
+    return g is None or str(g) == "1"
+
+
 def affix_total_weight(
     tiers_data: dict, mod_detail: dict, base_id: str, affix: str, ilvl: int
 ) -> int:
-    """Sum the spawn weights of all rollable tiers of one affix kind on a base.
+    """Sum the spawn weights of all rollable base-group tiers of one affix kind on a base.
 
-    Counts tiers with non-zero weight whose min item level is <= ``ilvl``.
+    Counts only base-group modifiers (id_mgroup 1; influence, fossil, essence etc. are
+    excluded) with non-zero weight whose min item level is <= ``ilvl``.
     """
     total = 0
     for mod_id, tier_by_base in tiers_data.items():
-        if mod_detail.get(str(mod_id), {}).get("affix") != affix:
+        info = mod_detail.get(str(mod_id), {})
+        if info.get("affix") != affix or not _is_base_mod(info):
             continue
         for t in tier_by_base.get(base_id, []):
-            w = int(t.get("weighting", 0) or 0)
-            if w and int(t.get("ilvl", 0) or 0) <= ilvl:
-                total += w
+            try:
+                w = int(t.get("weighting", 0) or 0)
+                if w and int(t.get("ilvl", 0) or 0) <= ilvl:
+                    total += w
+            except (TypeError, ValueError):
+                continue
     return total
 
 
@@ -447,8 +458,8 @@ def get_craft_tiers(base_type: str, query: str, ilvl: int = 100) -> str:
     shown highest-first (T1 = best values, lowest weight / hardest to roll).
 
     The Share column is the chance this tier is picked among all mods of the same affix
-    kind (prefix or suffix) on this item class at item level `ilvl`; it ignores influence,
-    fossil and essence modifiers.
+    kind (prefix or suffix) among base-group mods on this item class at item level `ilvl`;
+    it ignores influence, fossil and essence modifiers. Non-base mods show a dash.
 
     Only tiers with non-zero weight are shown; zero-weight entries are unrollable
     (removed or debug mods) and are silently excluded.
@@ -531,6 +542,7 @@ def get_craft_tiers(base_type: str, query: str, ilvl: int = 100) -> str:
         )
 
     lines = [f"## Craft of Exile — '{query}' tiers on {base_type}", ""]
+    totals: dict[tuple, int] = {}
 
     for display, mod_id, bid, base_name, affix, modgroup, tier_entries in results:
         lines.append(f"### {display}")
@@ -541,7 +553,11 @@ def get_craft_tiers(base_type: str, query: str, ilvl: int = 100) -> str:
         lines.append("| Tier | Min iLvl | Values | Weight | Share |")
         lines.append("|------|----------|--------|--------|-------|")
 
-        total = affix_total_weight(tiers_data, mod_detail, bid, affix, ilvl)
+        key = (bid, affix)
+        if key not in totals:
+            totals[key] = affix_total_weight(tiers_data, mod_detail, bid, affix, ilvl)
+        total = totals[key]
+        base_mod = _is_base_mod(mod_detail.get(str(mod_id), {}))
         sorted_tiers = sorted(tier_entries, key=lambda t: int(t.get("ilvl", 0)), reverse=True)
         for i, t in enumerate(sorted_tiers):
             tier_ilvl = t.get("ilvl", "?")
@@ -560,7 +576,7 @@ def get_craft_tiers(base_type: str, query: str, ilvl: int = 100) -> str:
                 formatted = raw_nv
             try:
                 eligible = int(tier_ilvl) <= ilvl
-                share = f"{int(weight) / total:.2%}" if total and eligible else "—"
+                share = f"{int(weight) / total:.2%}" if total and eligible and base_mod else "—"
             except (TypeError, ValueError):
                 share = "—"
             lines.append(f"| T{i + 1} | {tier_ilvl} | {formatted} | {weight} | {share} |")
