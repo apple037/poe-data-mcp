@@ -11,10 +11,10 @@ def test_miss_hint_and_duplicate_note():
         return f"No items found matching '{query}'."
 
     first = search(query="Absolute Agony")
-    assert "ask the user" in first and "already made this exact call" not in first
+    assert "ask the user" in first and "BLOCKED" not in first
     second = search(query="Absolute Agony")
-    assert second.startswith("NOTE: you already made this exact call")
-    assert "already made" not in search(query="Other")
+    assert second.startswith("BLOCKED: duplicate call") and "Absolute Agony" not in second
+    assert "BLOCKED" not in search(query="Other")
 
 
 def test_hit_passes_through_and_async_supported():
