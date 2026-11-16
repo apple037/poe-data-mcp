@@ -163,8 +163,12 @@ def _index_state() -> dict:
     return _get(f"{NINJA}/api/data/index-state", 900).json()
 
 
-def _search(version: str, league: str, skill: str) -> bytes:
-    q = f"overview={league}&type=exp" + (f"&skills={quote_plus(skill)}" if skill else "")
+def _filters(skill: str, ascendancy: str) -> str:
+    return "".join(f"&{k}={quote_plus(v)}" for k, v in (("class", ascendancy), ("skills", skill)) if v)
+
+
+def _search(version: str, league: str, skill: str = "", ascendancy: str = "") -> bytes:
+    q = f"overview={league}&type=exp" + _filters(skill, ascendancy)
     return _get(f"{NINJA}/api/builds/{version}/search?{q}", 900).content
 
 
@@ -186,12 +190,14 @@ def _table(title: str, counts: dict[int, int], names: list[str], total: int, top
     return f"### {title}\n| Name | Players | Share |\n|---|---|---|\n" + "\n".join(rows)
 
 
-def get_build_stats(skill: str = "", top: int = 10) -> str:
+def get_build_stats(skill: str = "", ascendancy: str = "", top: int = 10) -> str:
     """poe.ninja build popularity for the configured league (default: last challenge league).
 
     With `skill` (English gem name, e.g. 'Cyclone'): ascendancy share, support gems, uniques,
     keystones and anoints used by characters whose main skill is that gem.
-    Without `skill`: ascendancy share across the whole league.
+    With `ascendancy` (English, e.g. 'Reliquarian', 'Deadeye'): the main skills, uniques,
+    keystones and anoints that ascendancy plays. Both together narrow to that combination.
+    With neither: ascendancy share and main skills across the whole league.
     Shares are % of characters in the selection. Always cite the poe.ninja link in the output.
     """
     idx = _index_state()
@@ -199,22 +205,37 @@ def get_build_stats(skill: str = "", top: int = 10) -> str:
     if not snap:
         return f"poe.ninja has no build snapshot for league '{LEAGUE}' (POE_NINJA_BUILD_LEAGUE)."
     version, league_name = snap["version"], snap["name"]
+    skill, ascendancy = skill.strip(), ascendancy.strip()
 
-    total, dims, hashes = parse_search(_search(version, LEAGUE, skill))
+    # poe.ninja silently ignores unknown/miscased names and returns the whole league: validate both
+    total, dims, hashes = parse_search(_search(version, LEAGUE, skill, ascendancy))
+    classes = _dictionary(hashes["class"])
+    if skill and not ascendancy and f"supportgems-{skill}" not in dims and resolve_skill(skill, classes)[0]:
+        skill, ascendancy = "", skill  # small models pass ascendancy names as `skill`
+    if ascendancy:
+        canonical, suggestions = resolve_skill(ascendancy, classes)
+        if not canonical:
+            hint = f" Did you mean: {', '.join(suggestions)}?" if suggestions else ""
+            return f"No poe.ninja ascendancy named '{ascendancy}'.{hint}"
+        ascendancy = canonical
     if skill and f"supportgems-{skill}" not in dims:
-        # poe.ninja silently ignores unknown/miscased skill names and returns the whole league
         canonical, suggestions = resolve_skill(skill, _dictionary(hashes["gem"]))
         if not canonical:
             hint = f" Did you mean: {', '.join(suggestions)}?" if suggestions else ""
             return f"No poe.ninja builds found for skill '{skill}' in {league_name}.{hint}"
         skill = canonical
-        total, dims, hashes = parse_search(_search(version, LEAGUE, skill))
-        if f"supportgems-{skill}" not in dims:
-            return f"No poe.ninja builds found for skill '{skill}' in {league_name}."
+    total, dims, hashes = parse_search(_search(version, LEAGUE, skill, ascendancy))  # cached if unchanged
+    label = " + ".join(filter(None, (ascendancy, skill))) or "all skills"
+    if skill and f"supportgems-{skill}" not in dims:
+        return f"No poe.ninja builds found for {label} in {league_name}."
 
     names = lambda dim: _dictionary(hashes[dims[dim][0]])  # noqa: E731
-    sections = [_table("Ascendancy", dims["class"][1], names("class"), total, 50)]
-    if skill:
+    sections = []
+    if not ascendancy:
+        sections.append(_table("Ascendancy", dims["class"][1], names("class"), total, 50))
+    if not skill and "skills" in dims:
+        sections.append(_table("Main skills", dims["skills"][1], names("skills"), total, top))
+    if skill or ascendancy:
         for title, dim, skip in (("Support gems", f"supportgems-{skill}", False),
                                  ("Uniques (gear and jewels)", "items", True),
                                  ("Keystones", "keypassives", False),
@@ -222,8 +243,9 @@ def get_build_stats(skill: str = "", top: int = 10) -> str:
             if dim in dims:
                 sections.append(_table(title, dims[dim][1], names(dim), total, top, skip))
 
-    link = f"https://poe.ninja/poe1/builds/{LEAGUE}" + (f"?skills={quote_plus(skill)}" if skill else "")
-    head = f"## poe.ninja builds: {skill or 'all skills'} — {league_name} ({total} characters)"
+    filters = _filters(skill, ascendancy)
+    link = f"https://poe.ninja/poe1/builds/{LEAGUE}" + (f"?{filters[1:]}" if filters else "")
+    head = f"## poe.ninja builds: {label} — {league_name} ({total} characters)"
     out = "\n\n".join([head, *sections, f"Source: {link}"])
     new = new_challenge_leagues(idx["buildLeagues"], LEAGUE)
     if new:

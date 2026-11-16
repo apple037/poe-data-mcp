@@ -46,19 +46,35 @@ def test_new_challenge_leagues():
     assert nb.new_challenge_leagues(leagues, "allflame") == ["Foo"]
 
 
-def test_get_build_stats_cyclone(monkeypatch):
+def _patch(monkeypatch):
     idx = json.loads((FIX / "index_state.json").read_text())
     names = {n: _dict(n) for n in ("class", "gem", "item", "keypassive", "anointed")}
     raw = (FIX / "search_allflame_cyclone.pb").read_bytes()
     _, _, hashes = nb.parse_search(raw)
     by_hash = {h: names[n] for n, h in hashes.items() if n in names}
     monkeypatch.setattr(nb, "_index_state", lambda: idx)
-    monkeypatch.setattr(nb, "_search", lambda version, league, skill: raw)
+    monkeypatch.setattr(nb, "_search", lambda version, league, skill="", ascendancy="": raw)
     monkeypatch.setattr(nb, "_dictionary", lambda h: by_hash.get(h, []))
 
+
+def test_get_build_stats_cyclone(monkeypatch):
+    _patch(monkeypatch)
     out = nb.get_build_stats("Cyclone")
     assert "Allflame" in out and "Cyclone" in out
     assert "Ascendancy" in out and "%" in out
     assert "Support gems" in out and "Uniques" in out
     assert "Rare Helmet" not in out
     assert "https://poe.ninja/poe1/builds/allflame?skills=Cyclone" in out
+
+
+def test_get_build_stats_ascendancy(monkeypatch):
+    _patch(monkeypatch)
+    out = nb.get_build_stats(ascendancy="champion")
+    assert "Champion" in out and "Main skills" in out and "Keystones" in out
+    assert "### Ascendancy" not in out and "Support gems" not in out
+    assert "https://poe.ninja/poe1/builds/allflame?class=Champion" in out
+    # ascendancy name passed as skill (small-model mistake) is treated as ascendancy
+    assert "Main skills" in nb.get_build_stats("Champion")
+    assert nb.get_build_stats(ascendancy="Nope").startswith("No poe.ninja ascendancy named 'Nope'")
+    both = nb.get_build_stats("Cyclone", ascendancy="Champion")
+    assert "Support gems" in both and "class=Champion&skills=Cyclone" in both

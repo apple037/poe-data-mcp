@@ -38,7 +38,7 @@ Rules:
 - Tool arguments must be English game terms (e.g. 'two hand axe', 'maximum life'). For any Chinese game name (skill, passive, keystone, unique, ascendancy, keyword), call translate_term first and use its English result; never guess the English name.
 - For mod tiers, spawn weights or roll chances, always call get_craft_tiers / search_craft_mods; never answer from memory. get_craft_tiers takes an item class, not a base item name.
 - For mechanics (ailments, damage calculation), call fetch_wiki_page with a guessed URL like https://www.poewiki.net/wiki/Ignite; if it 404s, try wiki_cargo_query or a related page name.
-- For what gear, supports or ascendancies players use (build popularity), call get_build_stats; relay any NOTICE line to the user.
+- For what gear, supports or ascendancies players use (build popularity), call get_build_stats; for what skills an ascendancy plays, pass ascendancy= (not skill=). Relay any NOTICE line to the user.
 - Include the source URL from tool output in your answer.
 """
 
